@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>IDAM 코인 채굴</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #ecf0f1;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #00ffe7;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #00ffe7;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      max-width: 500px;
+      margin: 20px auto;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 255, 0.1);
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 10px 15px;
+      border-radius: 10px;
+      border: 1px solid #555;
+      font-size: 16px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+      background-color: #1f2a36;
+      color: #fff;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #00ffe7;
+      box-shadow: 0 0 8px #00ffe7;
+    }
+
+    button {
+      display: inline-block;
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      background-color: #00c9ff;
+      color: #fff;
+      font-weight: bold;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 0 8px #00c9ff;
+    }
+
+    button:hover {
+      background-color: #007c9a;
+      transform: scale(1.03);
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #00ffe7;
+      border-bottom: 2px solid #00ffe7;
+      padding-bottom: 5px;
+    }
+
+    .center-text {
+      text-align: center;
+      font-size: 16px;
+      margin: 10px 0;
+    }
+
+    .coin-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .coin {
+      width: 20px;
+      height: 20px;
+      background: radial-gradient(circle, gold 30%, orange 70%);
+      border-radius: 50%;
+      margin: 4px;
+      box-shadow: 0 0 6px rgba(255, 215, 0, 0.6);
+    }
+
+    ul#rankingList {
+      padding-left: 0;
+      list-style: none;
+      font-size: 15px;
+      color: #eee;
+    }
+
+    ul#rankingList li {
+      margin: 5px 0;
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        padding: 20px;
+      }
+
+      input, button {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>🏆 IDAM 코인 채굴</h1>
+
+  <div class="card">
+    <div class="section-title">📊 현재 랭킹 (보유 코인 많은 순)</div>
+    <ul id="rankingList" class="center-text"></ul>
+  </div>
+
+  <div class="card">
+    <label>학번</label>
+    <input id="studentId" type="text" onblur="getCoinFromSheet()">
+    <label>이름</label>
+    <input id="name" type="text" onblur="getCoinFromSheet()">
+
+    <div class="section-title">퀴즈 문제</div>
+    <p class="center-text">문제: <span id="question"></span></p>
+    <input type="number" id="answer">
+    <button onclick="checkAnswer()">제출</button>
+
+    <div class="section-title">현재 코인: <span id="coin">0</span>개</div>
+    <div class="coin-container" id="coinVisual"></div>
+
+    <button onclick="saveCoin()">코인 모두 저장하기</button>
+
+    <div class="section-title">저장 코인: <span id="sentCoin">0</span>개</div>
+  </div>
+
+  <div class="card">
+    <h3 class="center-text" style="margin-top: 0;">다른 학생에게 코인 보내기</h3>
+    <label>받을 학번</label>
+    <input id="receiverId" type="text">
+    <label>받는 사람 이름(또는 이유)</label>
+    <input id="receiverName" type="text">
+    <label>보낼 IDAM 코인 수</label>
+    <input id="sendAmount" type="number">
+    <button onclick="sendToUser()">코인 보내기</button>
+  </div>
+
+  <script>
+    let num1, num2, coin = 0, savedCoin = 0;
+
+    function generateQuestion() {
+      num1 = Math.floor(Math.random() * 9) + 1;
+      num2 = Math.floor(Math.random() * 9) + 1;
+      document.getElementById("question").textContent = `${num1} x ${num2}`;
+    }
+
+    function checkAnswer() {
+      const userAnswer = parseInt(document.getElementById("answer").value);
+      if (userAnswer === num1 * num2) {
+        alert("정답입니다! 코인을 획득했습니다.");
+        coin++;
+        document.getElementById("coin").innerText = coin;
+        updateCoinVisual();
+      } else {
+        alert("틀렸습니다. 다시 시도하세요.");
+      }
+      document.getElementById("answer").value = "";
+      generateQuestion();
+    }
+
+    function updateCoinVisual() {
+      const visual = document.getElementById("coinVisual");
+      visual.innerHTML = "";
+      for (let i = 0; i < coin; i++) {
+        const c = document.createElement("div");
+        c.className = "coin";
+        visual.appendChild(c);
+      }
+    }
+
+    function saveCoin() {
+      const id = document.getElementById("studentId").value.trim();
+      const name = document.getElementById("name").value.trim();
+      if (!id || !name) {
+        alert("학번과 이름을 입력해주세요.");
+        return;
+      }
+
+      const sentAmount = coin;
+      const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeAU98q_CdUUophR_eoceH38RuutBeWMuoFAkW9IC_jXN9VKg/formResponse";
+      const params = new URLSearchParams({
+        "entry.366340186": id,
+        "entry.976901666": name,
+        "entry.1556238593": "",
+        "entry.2117446867": "",
+        "entry.8599191": sentAmount
+      });
+
+      window.open(formUrl + "?" + params.toString(), "_blank");
+
+      savedCoin += sentAmount;
+      coin = 0;
+      document.getElementById("coin").innerText = coin;
+      document.getElementById("sentCoin").innerText = savedCoin;
+      updateCoinVisual();
+      showRanking();
+    }
+
+    function sendToUser() {
+      const senderId = document.getElementById("studentId").value.trim();
+      const senderName = document.getElementById("name").value.trim();
+      const receiverId = document.getElementById("receiverId").value.trim();
+      const receiverName = document.getElementById("receiverName").value.trim();
+      const amount = parseInt(document.getElementById("sendAmount").value);
+
+      if (!senderId || !senderName || !receiverId || !receiverName || isNaN(amount)) {
+        alert("모든 정보를 정확히 입력해주세요.");
+        return;
+      }
+
+      if (amount > savedCoin) {
+        alert("저장된 코인이 부족합니다. 먼저 코인을 저장하세요.");
+        return;
+      }
+
+      const formUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeAU98q_CdUUophR_eoceH38RuutBeWMuoFAkW9IC_jXN9VKg/formResponse";
+      const params = new URLSearchParams({
+        "entry.366340186": senderId,
+        "entry.976901666": senderName,
+        "entry.1556238593": receiverId,
+        "entry.2117446867": receiverName,
+        "entry.8599191": amount
+      });
+
+      window.open(formUrl + "?" + params.toString(), "_blank");
+
+      savedCoin -= amount;
+      document.getElementById("sentCoin").innerText = savedCoin;
+      alert(`${receiverName}에게 ${amount} 코인을 보냈습니다.`);
+      showRanking();
+    }
+
+    async function getCoinFromSheet() {
+      const id = document.getElementById("studentId").value.trim();
+      const name = document.getElementById("name").value.trim();
+      if (!id || !name) return;
+
+      const url = "https://opensheet.vercel.app/1KbhX-18UDYAFROkUSfH4H5f-N9_K2NJqfdt5DL_Ymg8/학생별 저장 코인";
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const row = data.find(r => r["학번"] === id && r["이름"] === name);
+        if (row) {
+          savedCoin = parseInt(row["현재 보유 코인"]) || 0;
+          document.getElementById("sentCoin").innerText = savedCoin;
+        }
+      } catch (error) {
+        console.error("코인 정보를 불러오는 중 오류 발생:", error);
+      }
+    }
+
+    async function showRanking() {
+      const url = "https://opensheet.vercel.app/1KbhX-18UDYAFROkUSfH4H5f-N9_K2NJqfdt5DL_Ymg8/학생별 저장 코인";
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const sorted = data
+          .filter(r => r["현재 보유 코인"] && !isNaN(parseInt(r["현재 보유 코인"])))
+          .sort((a, b) => parseInt(b["현재 보유 코인"]) - parseInt(a["현재 보유 코인"]));
+
+        const rankingList = document.getElementById("rankingList");
+        rankingList.innerHTML = "";
+
+        sorted.slice(0, 10).forEach((r, i) => {
+          const li = document.createElement("li");
+          li.innerText = `🏅 ${i + 1}위 - ${r["이름"] || "이름 없음"} (${r["현재 보유 코인"]} 코인)`;
+          rankingList.appendChild(li);
+        });
+
+      } catch (error) {
+        console.error("랭킹 불러오기 오류:", error);
+      }
+    }
+
+    generateQuestion();
+    showRanking();
+  </script>
+</body>
+</html>
